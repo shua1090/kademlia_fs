@@ -35,6 +35,8 @@ def split_and_hash_file(file_path):
         "hashes": hashes,
         # Date added
         "date_added": datetime.now().isoformat(),
+        # Whether this is a file or a directory
+        "is_file": True,
     }
 
     return file_metadata, chunks

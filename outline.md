@@ -13,7 +13,9 @@ etc. These nodes will take in this chunk if they don't already have it. "add_chu
 
 Once the file has been added, the node calls add_file(path) to add the file
 to the directory tree. This directory tree change is forwarded to all nodes, all
-of whom verify consistency with a merkle tree hash.
+of whom verify consistency with a merkle tree hash. How does this work?
+When you create a new file or directory, you call "merge_tree" with another node's
+directory tree, which merges it all up. idk.
 
 Periodically, nodes will choose a random chunk from the directory tree and
 query its existence. If it gets less than 10 responses, it will request

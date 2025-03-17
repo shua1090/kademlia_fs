@@ -25,3 +25,7 @@ this can lead to well-distributed data.
     query for it. If the number of responses is less than the ideal 20, it will
     request a "republish" which will essentially be a redistribution stage. The
     more nodes, the more often this happens obviously.
+
+### Relevant papers/docs:
+- https://pdos.csail.mit.edu/~petar/papers/maymounkov-kademlia-lncs.pdf
+- https://en.wikipedia.org/wiki/Kademlia

@@ -10,7 +10,11 @@ import pathlib
 class FileSystem:
     def __init__(self):
         # Reference file_metadata in file_utils.py
-        self.root: dict[str, any] = {}
+        self.root: dict[str, any] = {"/": {}}
+
+    def merge(self, other: "FileSystem"):
+        """Merge another directory tree into the current directory tree."""
+        self.root = {**self.root, **other.root}
 
     def _traverse_to_directory(
         self, path: str, create_if_missing: bool = False
@@ -83,7 +87,6 @@ class FileSystem:
 
         # Get the contents of the directory
         directory_contents = self._traverse_to_directory(path)
-        print("contents", directory_contents.keys())
 
         # Hash the contents of the directory
         directory_hash = [

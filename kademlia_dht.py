@@ -5,9 +5,15 @@ import math
 import random
 import time
 
+MAX_LAST_SEEN = 10
+
+
+def string_hex_id_to_int(hex_id):
+    return int(hex_id, 16)
+
 
 class KNode:
-    def __init__(self, id, ip, port, last_seen):
+    def __init__(self, id: str, ip, port, last_seen):
         self.id = id
         self.ip = ip
         self.port = port
@@ -16,14 +22,25 @@ class KNode:
     def seen_again(self):
         self.last_seen = time.time()
 
-    def get_distance(self, id):
-        return id ^ self.id
+    def get_distance(self, id: str):
+        return string_hex_id_to_int(id) ^ string_hex_id_to_int(self.id)
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __repr__(self):
+        return f"KNode(id={self.id}, ip={self.ip}, port={self.port}, last_seen={self.last_seen})"
 
 
 class KTable:
-    def __init__(self, our_id):
+    def __init__(self, our_id: str):
         self.our_id = our_id
         self.buckets = [KBucket(2**i, 2 ** (i + 1), 20) for i in range(160)]
+
+    def get_all_nodes(self):
+        for bucket in self.buckets:
+            for node in bucket.nodes:
+                yield node
 
     def get_bucket(self, distance):
         """Get the bucket for a given distance
@@ -48,12 +65,31 @@ class KTable:
             port (int): The port of the node
         """
         # Add to the bucket with the correct distance
-        bucket = self.get_bucket(node_id ^ self.our_id)
-        bucket.add_node(KNode(node_id, ip, port))
+        bucket = self.get_bucket(
+            string_hex_id_to_int(node_id) ^ string_hex_id_to_int(self.our_id)
+        )
+        bucket.add_node(KNode(node_id, ip, port, time.time()))
 
-    def find_closest_nodes(self, target_id, count=20):
-        bucket = self.get_bucket(target_id ^ self.our_id)
+    def find_closest_nodes(self, target_id: str, count=20):
+        bucket = self.get_bucket(
+            string_hex_id_to_int(target_id) ^ string_hex_id_to_int(self.our_id)
+        )
         return bucket.find_closest_nodes(target_id, count)
+
+    def __repr__(self):
+        return "\n".join(
+            filter(
+                lambda x: x != "",
+                [
+                    (
+                        f"KBucket(min_id={bucket.min_id}, max_id={bucket.max_id}, nodes={bucket.nodes})"
+                        if bucket.nodes
+                        else ""
+                    )
+                    for bucket in self.buckets
+                ],
+            )
+        )
 
 
 class KBucket:
@@ -63,7 +99,7 @@ class KBucket:
         self.nodes = []
         self.max_nodes = max_nodes
 
-    def get_distance(self, id):
+    def get_distance(self, id: str):
         """Get the distance between the node and the min ID
 
         Args:
@@ -72,7 +108,7 @@ class KBucket:
         Returns:
             int: The distance between the node and the min ID
         """
-        return id ^ self.min_id
+        return string_hex_id_to_int(id) ^ self.min_id
 
     def add_node(self, node):
         """Add a node to the bucket, if it's not already in the bucket
@@ -81,7 +117,7 @@ class KBucket:
             node (KNode): The node to add
         """
         # If the node is not already in the bucket, add it
-        if node not in self.nodes:
+        if node.id not in [node.id for node in self.nodes]:
             if len(self.nodes) < self.max_nodes:
                 self.nodes.append(node)
             else:
@@ -103,6 +139,10 @@ class KBucket:
                     ):
                         self.nodes.remove(furthest_node)
                         self.nodes.append(node)
+
+        else:
+            # Update the last seen time of the node
+            self.nodes[self.nodes.index(node)].last_seen = time.time()
 
     def __len__(self):
         return len(self.nodes)

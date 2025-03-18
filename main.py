@@ -3,16 +3,36 @@
 import hashlib
 import xmlrpc
 
+import dht
 from kademlia_dht import KNode, KTable, KBucket
 
-us = KNode(hashlib.sha1("127.0.0.1:8000".encode()).hexdigest(), "127.0.0.1", 8000, 0)
+port_temp = input("port? ")
+us = KNode(
+    hashlib.sha1(f"localhost:{port_temp}".encode()).hexdigest(),
+    "localhost",
+    int(port_temp),
+    0,
+)
 
-# Initialize the DHT
-dht = KTable(0)
-
-# Add a node to the DHT
-dht.add_node(1, "127.0.0.1", 8000)
+our_dht_handler = dht.DHT(us)
 
 # Main REPL
 while True:
-    pass
+    command = input("> ")
+    if command == "exit":
+        break
+    elif command == "start":
+        our_dht_handler.start_server("localhost", int(port_temp))
+    elif command == "add":
+        input_file = input("File: ")
+        path = input("Path in DHT: ")
+        our_dht_handler.add_file(input_file, path)
+    elif command == "get":
+        path = input("Path in DHT: ")
+        our_dht_handler.get_file(path)
+    elif command == "list":
+        our_dht_handler.list_files()
+
+    # Show the ktable
+    elif command == "nodes":
+        print(our_dht_handler.table)
